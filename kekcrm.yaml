@@ -1,0 +1,486 @@
+openapi: 3.0.0
+info:
+  version: '1'
+  title: just a simple crm
+  description: kek?
+  
+paths:
+  '/auth/token/':
+    post:
+      tags:
+        - Auth
+      operationId: getToken
+      summary: Get a JWT authentication token
+      requestBody:
+        description: User credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetToken'
+      responses:
+        '201':
+          description: successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetToken'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  '/auth/logout/':
+    post:
+      tags:
+        - Auth
+      operationId: logout
+      summary: Blacklist user's token
+      responses:
+        '204':
+          description: Successfully logged out
+        '401':
+          $ref: '#/components/responses/AuthError'
+  '/users/':
+    get:
+      tags:
+        - Users
+      operationId: fetch users
+      responses:
+        '200':
+          description: successfully fetched users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    count:
+                      type: integer
+                      example: 123
+                      description: Number of total records in db
+                    next:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/users/?page=4
+                      description: link to next page
+                    previous:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/users/?page=2
+                      description: link to previous page  
+                    results:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/User'
+                      description: list of objects
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Users
+      operationId: create a new user
+      responses:
+        '200':
+          description: successfully created a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  '/users/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: customer's unique identifier
+        schema:
+          type: integer
+          example: 531
+    get:
+      tags:
+        - Users
+      operationId: getUser
+      responses:
+        '200':
+          description: successfully fetched a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    patch:
+      tags:
+        - Users
+      operationId: patchUser
+      responses:
+        '200':
+          description: successfully updated a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+        - Users
+      operationId: deleteUser
+      responses:
+        '204':
+          description: successfully deleted a user
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+          
+  '/customers/':
+    get:
+      tags:
+        - Customers
+      operationId: fetch customers
+      responses:
+        '200':
+          description: successfully fetched data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    count:
+                      type: integer
+                      example: 123
+                      description: Number of total records in db
+                    next:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/customers/?page=4
+                      description: link to next page
+                    previous:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/customers/?page=2
+                      description: link to previous page  
+                    results:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Customer'
+                      description: list of objects
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Customers
+      operationId: create customer record
+      responses:
+        '201':
+          description: successfully created a customer record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+      
+  '/customers/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: customer's unique identifier
+        schema:
+          type: integer
+          example: 531
+    get:
+      tags:
+        - Customers
+      operationId: fetch customer
+      responses:
+        '200':
+          description: successfully fetched data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+      
+    patch:
+      tags:
+        - Customers
+      operationId: update customer record
+      responses:
+        '201':
+          description: successfully updated a customer record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+        - Customers
+      description: delete a customer record
+      responses:
+        '204':
+          description: successfully deleted a customer record
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+
+  '/interactions/':
+    get:
+      tags:
+        - Interactions
+      description: fetch interactions
+      responses:
+        '200':
+          description: successfully fetched data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    count:
+                      type: integer
+                      example: 123
+                      description: Number of total records in db
+                    next:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/interactions/?page=4
+                      description: link to next page
+                    previous:
+                      type: string
+                      nullable: true
+                      format: uri
+                      example: http://kekcrm.example.org/api/interactions/?page=2
+                      description: link to previous page  
+                    results:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Interaction'
+                      description: list of objects
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Interactions
+      description: create an interaction record
+      responses:
+        '201':
+          description: successfully created an interaction record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  '/interactions/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: customer's unique identifier
+        schema:
+          type: integer
+          example: 531
+    get:
+      tags:
+        - Interactions
+      description: fetch an interaction record
+      responses:
+        '200':
+          description: successfully fetched an interaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    patch:
+      tags:
+        - Interactions
+      description: update an interaction record
+      responses:
+        '201':
+          description: successfully updated an interaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+    delete:
+      tags:
+        - Interactions
+      description: delete an interaction record
+      responses:
+        '204':
+          description: successfully deleted an interaction record
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+          
+components:
+  schemas:
+    User:
+      type: object
+      description: object schema of the CRM user
+      properties:
+        id:
+          type: integer
+          description: unique identifier
+        first_name:
+          type: string
+          description: first name
+          example: 'John'
+        last_name:
+          type: string
+          description: last name
+          example: 'Doe'
+        email:
+          type: string
+          description: email
+          format: email
+        employed_since:
+          type: string
+          format: date-time
+          description: date of employment
+        interactions:
+          description: list of last 10 interactions involving the user
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+          
+    Interaction:
+      type: object
+      description: Interaction object schema
+      properties:
+        id:
+          type: integer
+          description: unique identifier
+        customer_id:
+          type: integer
+          description: customer's unique identifier
+        interaction_type:
+          type: string
+          description: the type of the interaction, e.g. phone call, email etc
+          enum: ['phone call', 'email', 'live chat']
+        date:
+          type: string
+          format: date-time
+          description: the date and time of the interaction
+        notes:
+          type: string
+          description: additional information
+          example: 'customer was rude af'
+    Customer:
+      type: object
+      description: Customer object schema
+      properties:
+        id:
+          type: integer
+          description: unique identifier
+        name:
+          type: string
+          description: The full name of the customer
+        email:
+          type: string
+          description: The email address of the customer
+        phone_number:
+          type: string
+          description: The phone number of the customer
+        interactions:
+          type: array
+          description: List of ids of interactions associated with the customer
+          items:
+            type: integer
+      required: ['id', 'name', 'email', 'phone_number']
+          
+    AuthError:
+      description: 'authentication failure'
+      type: object
+      properties:
+        detail:
+          type: string
+          example: 'Authentication credentials were not provided'
+    ValidationError:
+      description: Standard DRF validation error
+      type: object
+      properties:
+        field_name:
+          description: 'Invalid field name. Can be multiple'
+          example: [ 'Required field.' ]
+          type: array
+          items:
+            type: string
+    PermissionError:
+      description: Permission denied
+      type: object
+      properties:
+        detail:
+          description: 'Error description'
+          example: 'You do not have sufficient rights to perform this action'
+          type: string
+    GetToken:
+      type: object
+      properties:
+        auth_token:
+          type: string
+
+  responses:
+    ValidationError:
+      description: 'Bad request'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    PermissionError:
+      description: 'User does not have required access rights'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PermissionError'
+    AuthError:
+      description: 'Failed authenticating user / User not authenticated'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthError'
