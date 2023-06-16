@@ -1,10 +1,9 @@
 import base64
 
-from interactions.models import Interaction, ChatLog, Message, Image, EmailLog
 from customers.models import Customer
-from rest_framework import serializers as s
-
 from django.core.files.base import ContentFile
+from interactions.models import ChatLog, EmailLog, Image, Interaction, Message
+from rest_framework import serializers as s
 
 
 class Base64ImageField(s.ImageField):

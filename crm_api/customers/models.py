@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.postgres import fields as f
+from django.db import models
 
 
 class Customer(models.Model):

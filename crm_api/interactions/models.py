@@ -1,8 +1,7 @@
-from django.db import models
-from django.contrib.postgres import fields as f
 from customers.models import Customer
+from django.contrib.postgres import fields as f
+from django.db import models
 from users.models import User
-
 
 INTERACTION_TYPES = [
     ("phone call", "phone call"),
@@ -12,7 +11,7 @@ INTERACTION_TYPES = [
 
 
 class Interaction(models.Model):
-    type = models.CharField(choices=INTERACTION_TYPES)
+    type = models.CharField(choices=INTERACTION_TYPES, max_length=30)
     customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
     date = models.DateTimeField(auto_now_add=True)
     notes = models.CharField(max_length=256)
