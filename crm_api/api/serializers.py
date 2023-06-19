@@ -1,13 +1,28 @@
 import base64
 
 from customers.models import Customer
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from interactions.models import ChatLog, EmailLog, Image, Interaction, Message
 from rest_framework import serializers as s
+from users.models import Role
 
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+class UserSerializer(s.Serializer):
+
+    class Meta:
+        fields = '__all__'
+        model = User
+
+
+class RoleSerializer(s.Serializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Role
 
 
 class Base64RecordingField(s.FileField):
@@ -16,7 +31,10 @@ class Base64RecordingField(s.FileField):
         if isinstance(data, str) and data.startswith('data:audio'):
             format, recordingstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(recordingstr), name='temp.' + ext)
+            data = ContentFile(
+                base64.b64decode(recordingstr),
+                name='temp.' + ext
+            )
         return super().to_internal_value(data)
 
 

@@ -1,5 +1,4 @@
 from customers.models import Customer
-from django.contrib.postgres import fields as f
 from django.db import models
 from users.models import User
 
@@ -12,7 +11,11 @@ INTERACTION_TYPES = [
 
 class Interaction(models.Model):
     type = models.CharField(choices=INTERACTION_TYPES, max_length=30)
-    customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING, related_name='interactions')
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.DO_NOTHING,
+        related_name='interactions'
+    )
     date = models.DateTimeField(auto_now_add=True)
     notes = models.CharField(max_length=256)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
