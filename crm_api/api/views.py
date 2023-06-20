@@ -1,6 +1,6 @@
 from customers.models import Customer
 from interactions.models import ChatLog, EmailLog, Interaction
-from permissions import (CustomerPermission, InteractionPermission,
+from .permissions import (CustomerPermission, InteractionPermission,
                          LogsPermission, UserPermission, IsAdmin)
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -8,6 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import User, Role
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from rest_framework import status
 
 from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           CustomerSerializer, EmailLogSerializer,
@@ -53,6 +56,17 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     permission_classes = [UserPermission, IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            validate_password(serializer.validated_data['password'])
+        except ValidationError as e:
+            return Response(
+                {'error': e.messages},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=['get'])
     def user_by_email(self, request):

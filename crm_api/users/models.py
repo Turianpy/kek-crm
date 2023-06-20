@@ -20,7 +20,8 @@ class User(AbstractUser):
     role = models.ForeignKey(
         'Role',
         on_delete=models.DO_NOTHING,
-        related_name='users'
+        related_name='users',
+        null=True
     )
 
     @property
@@ -32,7 +33,9 @@ class User(AbstractUser):
 
 class Role(models.Model):
     name = models.CharField(max_length=30)
-    permissions = f.ArrayField(models.CharField(choices=USER_PERMISSIONS))
+    permissions = f.ArrayField(
+        models.CharField(choices=USER_PERMISSIONS, max_length=30)
+    )
 
     def __str__(self):
         return self.name

@@ -11,14 +11,23 @@ from users.models import Role
 User = get_user_model()
 
 
-class UserSerializer(s.Serializer):
+class UserSerializer(s.ModelSerializer):
+
+    role = s.PrimaryKeyRelatedField(queryset=Role.objects.all())
 
     class Meta:
         fields = '__all__'
         model = User
 
+    def create(self, validated_data):
+        pw = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(pw)
+        user.save()
+        return user
 
-class RoleSerializer(s.Serializer):
+
+class RoleSerializer(s.ModelSerializer):
 
     class Meta:
         fields = '__all__'

@@ -14,6 +14,7 @@ v1_router.register(
 v1_router.register('chats', views.ChatLogViewSet, basename='chats')
 v1_router.register('emails', views.EmailLogViewSet, basename='emails')
 v1_router.register('users', views.UserViewSet, basename='users')
+v1_router.register('roles', views.RoleViewSet, basename='roles')
 
 
 urlpatterns = [
