@@ -1,26 +1,26 @@
 version: '3.8'
 services:
 
-  db:
+  crm_db:
     image: postgres:13.0-alpine
     volumes:
-      - db:/var/lib/postgresql/data
+      - crm_db:/var/lib/postgresql/data
     env_file:
       - ./.env
     
-  api:
-    image: turianpy/kekcrm_api:latest
+  crm_api:
+    image: turianpy/crm_api:latest
     restart: always
     volumes:
       - static_backend:/app/static_backend/
       - media_backend:/app/media_backend/
-      - crm_api:app
+      - ../crm_api:/app
     depends_on:
-      - db
+      - crm_db
     env_file:
       - ./.env
     
-  nginx:
+  crm_nginx:
     image: nginx:1.19.3
     ports:
       - "80:80"
@@ -28,8 +28,10 @@ services:
       - static_backend:/var/html/static_backend/
       - media_backend:/var/html/media_backend/
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - crm_api
 
 volumes:
   static_backend:
   media_backend:
-  db:
+  crm_db:
