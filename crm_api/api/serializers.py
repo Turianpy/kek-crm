@@ -7,7 +7,6 @@ from interactions.models import ChatLog, EmailLog, Image, Interaction, Message
 from rest_framework import serializers as s
 from users.models import Role
 
-
 User = get_user_model()
 
 
@@ -150,6 +149,7 @@ class InteractionCreateSerializer(s.ModelSerializer):
 
     customer = s.PrimaryKeyRelatedField(queryset=Customer.objects.all())
     user = s.PrimaryKeyRelatedField(queryset=User.objects.all())
+    recording = Base64RecordingField(required=False)
 
     class Meta:
         model = Interaction

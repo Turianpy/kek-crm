@@ -42,9 +42,13 @@ class CustomerPermission(p.BasePermission):
 
 class LogsPermission(p.BasePermission):
     def has_permission(self, request, view):
-        if 'view logs' in request.user.role.permissions:
-            return True
+        perms = request.user.role.permissions
+        if request.method == 'POST':
+            return 'create logs' in perms
+        elif request.method == 'GET':
+            return 'view logs' in perms or request.user.is_admin
         return request.user.is_admin
 
     def has_object_permission(self, request, view, obj):
-        return request.user.is_admin
+        perms = request.user.role.permissions
+        return 'view logs' in perms or request.user.is_admin

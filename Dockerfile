@@ -11,6 +11,6 @@ COPY . .
 
 ENV PYTHONPATH .
 
-CMD ["gunicorn", "crm_api.wsgi:application", "--bind", "0:8000", "--workers", "3"]
+CMD ["gunicorn", "crm_api.wsgi:application", "--bind", "0:8000", "--workers", "3", "--reload"]
 
 EXPOSE 8000

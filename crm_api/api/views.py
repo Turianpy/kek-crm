@@ -1,21 +1,20 @@
 from customers.models import Customer
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from interactions.models import ChatLog, EmailLog, Interaction
-from .permissions import (CustomerPermission, InteractionPermission,
-                         LogsPermission, UserPermission, IsAdmin)
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from users.models import User, Role
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from rest_framework import status
+from users.models import Role, User
 
+from .permissions import (CustomerPermission, InteractionPermission, IsAdmin,
+                          LogsPermission, UserPermission)
 from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           CustomerSerializer, EmailLogSerializer,
                           InteractionCreateSerializer, InteractionSerializer,
-                          UserSerializer, RoleSerializer)
+                          RoleSerializer, UserSerializer)
 
 
 class CustomerViewSet(ModelViewSet):
@@ -33,6 +32,11 @@ class InteractionViewSet(ModelViewSet):
         if self.action == 'create':
             return InteractionCreateSerializer
         return InteractionSerializer
+
+    def create(self, request, *args, **kwargs):
+        if not request.data.get('user'):
+            request.data['user'] = request.user.id
+        return super().create(request, *args, **kwargs)
 
 
 class ChatLogViewSet(ModelViewSet):
@@ -67,6 +71,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 {'error': e.messages},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
     def user_by_email(self, request):

@@ -8,6 +8,7 @@ USER_PERMISSIONS = (
     ('create customers', 'create customers'),
     ('view customers', 'view customers'),
     ('create users', 'create users'),
+    ('create logs', 'create logs'),
     ('view logs', 'view logs'),
     ('view other users', 'view other users'),
     ('admin', 'admin')
