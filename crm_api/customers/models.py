@@ -9,10 +9,11 @@ class Customer(models.Model):
     business = models.ForeignKey(
         'Business',
         on_delete=models.DO_NOTHING,
-        null=True)
+        null=True,
+        related_name='representatives')
 
     def __str__(self):
-        return self.name
+        return self.first_name + ' ' + self.last_name
 
 
 class Business(models.Model):
