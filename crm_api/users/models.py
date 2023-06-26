@@ -1,42 +1,24 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.postgres import fields as f
 from django.db import models
-
-USER_PERMISSIONS = (
-    ('create interactions', 'create interactions'),
-    ('view interactions', 'view interactions'),
-    ('create customers', 'create customers'),
-    ('view customers', 'view customers'),
-    ('create users', 'create users'),
-    ('create logs', 'create logs'),
-    ('view logs', 'view logs'),
-    ('view other users', 'view other users'),
-    ('admin', 'admin')
-)
 
 
 class User(AbstractUser):
     employed_since = models.DateField(auto_now_add=True)
     phone_number = models.CharField(max_length=20)
-    role = models.ForeignKey(
-        'Role',
-        on_delete=models.DO_NOTHING,
-        related_name='users',
-        null=True
-    )
 
     @property
     def is_admin(self):
         return (
-            self.role.name == 'admin' or 'admin' in self.role.permissions
-            ) or self.is_staff
+            'admin' in self.groups.values_list('name', flat=True)
+            or self.is_superuser
+        )
 
+    @property
+    def is_staff(self):
+        return (
+            self.is_admin
+            or 'manager' in self.groups.values_list('name', flat=True)
+        )
 
-class Role(models.Model):
-    name = models.CharField(max_length=30)
-    permissions = f.ArrayField(
-        models.CharField(choices=USER_PERMISSIONS, max_length=30)
-    )
-
-    def __str__(self):
-        return self.name
+    def has_perm(self, perm: str, obj=None) -> bool:
+        return super().has_perm(perm, obj) or self.is_admin

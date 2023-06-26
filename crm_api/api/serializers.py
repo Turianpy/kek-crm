@@ -1,22 +1,40 @@
 import base64
 
 from customers.models import Customer
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, models
 from django.core.files.base import ContentFile
 from interactions.models import ChatLog, EmailLog, Image, Interaction, Message
 from rest_framework import serializers as s
-from users.models import Role
 
 User = get_user_model()
 
 
 class UserSerializer(s.ModelSerializer):
 
-    role = s.PrimaryKeyRelatedField(queryset=Role.objects.all())
+    interactions = s.SerializerMethodField()
 
     class Meta:
-        fields = '__all__'
         model = User
+        exclude = (
+            'password', 'is_superuser', 'date_joined'
+        )
+
+    def get_interactions(self, instance):
+        return InteractionShortSerializer(instance.interactions.all()[:10], many=True).data
+
+
+class UserCreateSerializer(s.ModelSerializer):
+
+    first_name = s.CharField(max_length=30, required=True)
+    last_name = s.CharField(max_length=30, required=True)
+    email = s.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'password', 'phone_number',
+            'first_name', 'last_name', 'email'
+        ]
 
     def create(self, validated_data):
         pw = validated_data.pop('password')
@@ -25,12 +43,26 @@ class UserSerializer(s.ModelSerializer):
         user.save()
         return user
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret.pop('password')
+        return ret
 
-class RoleSerializer(s.ModelSerializer):
+
+class PermissionSerializer(s.ModelSerializer):
 
     class Meta:
         fields = '__all__'
-        model = Role
+        model = models.Permission
+
+
+class GroupSerializer(s.ModelSerializer):
+
+    permissions = PermissionSerializer(many=True)
+
+    class Meta:
+        fields = '__all__'
+        model = models.Group
 
 
 class Base64RecordingField(s.FileField):
@@ -61,6 +93,17 @@ class CustomerSerializer(s.ModelSerializer):
     class Meta:
         model = Customer
         fields = '__all__'
+
+
+class CustomerWithInteractionsSerializer(s.ModelSerializer):
+    interactions = s.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+    def get_interactions(self, instance):
+        return list(instance.interactions.all().values_list('id', flat=True)[:10])
 
 
 class MessageSerializer(s.ModelSerializer):
@@ -106,6 +149,15 @@ class ImageSerializer(s.ModelSerializer):
     class Meta:
         model = Image
         fields = ('image', 'interaction')
+
+
+class InteractionShortSerializer(s.ModelSerializer):
+
+    customer = s.PrimaryKeyRelatedField(queryset=Customer.objects.all())
+
+    class Meta:
+        model = Interaction
+        fields = ['id', 'customer', 'type', 'date', 'notes']
 
 
 class InteractionSerializer(s.ModelSerializer):

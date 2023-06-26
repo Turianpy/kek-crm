@@ -1,4 +1,5 @@
 from customers.models import Customer
+from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from interactions.models import ChatLog, EmailLog, Interaction
@@ -7,26 +8,34 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from users.models import Role, User
+from users.models import User
 
 from .permissions import (CustomerPermission, InteractionPermission, IsAdmin,
                           LogsPermission, UserPermission)
 from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
-                          CustomerSerializer, EmailLogSerializer,
+                          CustomerSerializer,
+                          CustomerWithInteractionsSerializer,
+                          EmailLogSerializer, GroupSerializer,
                           InteractionCreateSerializer, InteractionSerializer,
-                          RoleSerializer, UserSerializer)
+                          PermissionSerializer, UserCreateSerializer,
+                          UserSerializer)
 
 
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [CustomerPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated & CustomerPermission]
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return CustomerWithInteractionsSerializer
+        return CustomerSerializer
 
 
 class InteractionViewSet(ModelViewSet):
     queryset = Interaction.objects.all()
     serializer_class = InteractionSerializer
-    permission_classes = [InteractionPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated & InteractionPermission]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -42,7 +51,7 @@ class InteractionViewSet(ModelViewSet):
 class ChatLogViewSet(ModelViewSet):
     queryset = ChatLog.objects.all()
     serializer_class = ChatLogSerializer
-    permission_classes = [LogsPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated & LogsPermission]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -51,7 +60,7 @@ class ChatLogViewSet(ModelViewSet):
 
 
 class EmailLogViewSet(ModelViewSet):
-    permission_classes = [LogsPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated & LogsPermission]
     queryset = EmailLog.objects.all()
     serializer_class = EmailLogSerializer
 
@@ -59,10 +68,15 @@ class EmailLogViewSet(ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    permission_classes = [UserPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated & UserPermission]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserCreateSerializer
+        return UserSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = UserSerializer(data=request.data)
+        serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             validate_password(serializer.validated_data['password'])
@@ -89,7 +103,13 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class RoleViewSet(viewsets.ModelViewSet):
-    serializer_class = RoleSerializer
-    queryset = Role.objects.all()
-    permission_classes = [IsAuthenticated, IsAdmin]
+class GroupViewSet(ModelViewSet):
+    serializer_class = GroupSerializer
+    queryset = Group.objects.all()
+    permission_classes = [IsAuthenticated & IsAdmin]
+
+
+class PermissionViewSet(ModelViewSet):
+    serializer_class = PermissionSerializer
+    queryset = Permission.objects.all()
+    permission_classes = [IsAuthenticated & IsAdmin]

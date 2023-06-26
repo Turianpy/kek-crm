@@ -11,11 +11,16 @@ v1_router.register(
     'interactions',
     views.InteractionViewSet,
     basename='interactions'
-    )
+)
 v1_router.register('chats', views.ChatLogViewSet, basename='chats')
 v1_router.register('emails', views.EmailLogViewSet, basename='emails')
 v1_router.register('users', views.UserViewSet, basename='users')
-v1_router.register('roles', views.RoleViewSet, basename='roles')
+v1_router.register('groups', views.GroupViewSet, basename='groups')
+v1_router.register(
+    'permissions',
+    views.PermissionViewSet,
+    basename='permissions'
+)
 
 
 urlpatterns = [
