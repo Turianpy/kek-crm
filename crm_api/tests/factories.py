@@ -6,13 +6,15 @@ import tempfile
 import wave
 
 import factory
+import pytz
 from customers.models import Business, Customer
+from django.contrib.auth.models import Group, Permission
 from django.core.files import File
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
-from interactions.models import (INTERACTION_TYPES, ChatLog, EmailLog, Image,
+from interactions.models import (INTERACTION_TYPES, ChatLog, EmailLog,
                                  Interaction, Message)
-from users.models import USER_PERMISSIONS, Role, User
+from users.models import User
 
 
 def generate_audio():
@@ -39,28 +41,46 @@ def generate_audio():
 fake = Faker()
 
 
-class RoleFactory(factory.django.DjangoModelFactory):
+class PermissionFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Role
+        model = Permission
 
-    name = factory.LazyAttribute(lambda x: fake.word(ext_word_list=None))
-    permissions = factory.LazyAttribute(
-        lambda x: random.sample(
-            [p[0] for p in USER_PERMISSIONS], 3
-            )
-        )
+    codename = factory.LazyAttribute(lambda x: fake.word())
+    name = factory.LazyAttribute(lambda x: fake.word())
+
+
+class GroupFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Group
+
+    name = factory.LazyAttribute(lambda x: fake.word())
+
+    @factory.post_generation
+    def add_permissions(instance, create, extracted, **kwargs):
+        if not create:
+            return
+        for _ in range(5):
+            PermissionFactory.create(group=instance)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
 
-    employed_since = factory.LazyAttribute(lambda x: fake.date())
+    employed_since = factory.LazyAttribute(
+        lambda x: fake.date_time(tzinfo=pytz.UTC)
+    )
     username = factory.LazyAttribute(lambda x: fake.user_name())
     password = factory.LazyAttribute(lambda x: fake.password())
     email = factory.LazyAttribute(lambda x: fake.email())
-    role = factory.SubFactory(RoleFactory)
     phone_number = factory.LazyAttribute(lambda x: fake.phone_number())
+
+    @factory.post_generation
+    def add_groups(instance, create, extracted, **kwargs):
+        if not create:
+            return
+        for _ in range(3):
+            instance.groups.add(random.choice(Group.objects.all()))
 
 
 class CustomerFactory(factory.django.DjangoModelFactory):
@@ -101,8 +121,10 @@ class ChatLogFactory(factory.django.DjangoModelFactory):
         model = ChatLog
 
     interaction = factory.SubFactory(InteractionFactory)
-    started_at = factory.LazyAttribute(lambda x: fake.date())
-    ended_at = factory.LazyAttribute(lambda x: fake.date())
+    started_at = factory.LazyAttribute(
+        lambda x: fake.date_time(tzinfo=pytz.UTC)
+    )
+    ended_at = factory.LazyAttribute(lambda x: fake.date_time(tzinfo=pytz.UTC))
 
     @factory.post_generation
     def add_messages(instance, create, extracted, **kwargs):
@@ -116,7 +138,9 @@ class MessageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Message
 
-    timestamp = factory.LazyAttribute(lambda x: fake.date())
+    timestamp = factory.LazyAttribute(
+        lambda x: fake.date_time(tzinfo=pytz.UTC)
+    )
     sender = factory.LazyAttribute(lambda x: fake.name())
     content = factory.LazyAttribute(lambda x: fake.text())
     chat = factory.SubFactory(ChatLogFactory)
@@ -129,6 +153,7 @@ class EmailFactory(factory.django.DjangoModelFactory):
     interaction = factory.SubFactory(InteractionFactory)
     subject = factory.LazyAttribute(lambda x: fake.text())
     body = factory.LazyAttribute(lambda x: fake.text())
+    sent_at = factory.LazyAttribute(lambda x: fake.date_time(tzinfo=pytz.UTC))
 
 
 class BusinessFactory(factory.django.DjangoModelFactory):

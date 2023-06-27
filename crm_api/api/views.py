@@ -10,15 +10,16 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import User
 
-from .permissions import (CustomerPermission, InteractionPermission, IsAdmin,
-                          LogsPermission, UserPermission)
+from .permissions import (ChatLogsPermission, CustomerPermission,
+                          EmailLogsPermission, InteractionPermission, IsAdmin,
+                          UserPermission)
 from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           CustomerSerializer,
                           CustomerWithInteractionsSerializer,
-                          EmailLogSerializer, GroupSerializer,
-                          InteractionCreateSerializer, InteractionSerializer,
-                          PermissionSerializer, UserCreateSerializer,
-                          UserSerializer)
+                          EmailLogSerializer, GroupCreateSerializer,
+                          GroupSerializer, InteractionCreateSerializer,
+                          InteractionSerializer, PermissionSerializer,
+                          UserCreateSerializer, UserSerializer)
 
 
 class CustomerViewSet(ModelViewSet):
@@ -51,7 +52,7 @@ class InteractionViewSet(ModelViewSet):
 class ChatLogViewSet(ModelViewSet):
     queryset = ChatLog.objects.all()
     serializer_class = ChatLogSerializer
-    permission_classes = [IsAuthenticated & LogsPermission]
+    permission_classes = [IsAuthenticated & ChatLogsPermission]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -60,7 +61,7 @@ class ChatLogViewSet(ModelViewSet):
 
 
 class EmailLogViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated & LogsPermission]
+    permission_classes = [IsAuthenticated & EmailLogsPermission]
     queryset = EmailLog.objects.all()
     serializer_class = EmailLogSerializer
 
@@ -107,6 +108,11 @@ class GroupViewSet(ModelViewSet):
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     permission_classes = [IsAuthenticated & IsAdmin]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return GroupCreateSerializer
+        return GroupSerializer
 
 
 class PermissionViewSet(ModelViewSet):

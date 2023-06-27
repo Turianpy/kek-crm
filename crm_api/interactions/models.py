@@ -18,7 +18,11 @@ class Interaction(models.Model):
     )
     date = models.DateTimeField(auto_now_add=True)
     notes = models.CharField(max_length=256)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='interactions')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.DO_NOTHING,
+        related_name='interactions'
+    )
     recording = models.FileField(upload_to='media/recordings', null=True)
 
     class Meta:

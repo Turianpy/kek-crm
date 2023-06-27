@@ -20,7 +20,9 @@ class UserSerializer(s.ModelSerializer):
         )
 
     def get_interactions(self, instance):
-        return InteractionShortSerializer(instance.interactions.all()[:10], many=True).data
+        return InteractionShortSerializer(
+            instance.interactions.all()[:10],
+            many=True).data
 
 
 class UserCreateSerializer(s.ModelSerializer):
@@ -54,6 +56,17 @@ class PermissionSerializer(s.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = models.Permission
+
+
+class GroupCreateSerializer(s.ModelSerializer):
+
+    permissions = s.PrimaryKeyRelatedField(
+        queryset=models.Permission.objects.all(), many=True
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.Group
 
 
 class GroupSerializer(s.ModelSerializer):
@@ -103,7 +116,9 @@ class CustomerWithInteractionsSerializer(s.ModelSerializer):
         fields = '__all__'
 
     def get_interactions(self, instance):
-        return list(instance.interactions.all().values_list('id', flat=True)[:10])
+        return list(
+            instance.interactions.all().values_list('id', flat=True)[:10]
+        )
 
 
 class MessageSerializer(s.ModelSerializer):
