@@ -5,6 +5,13 @@ from django.db import models
 class User(AbstractUser):
     employed_since = models.DateField(auto_now_add=True)
     phone_number = models.CharField(max_length=30)
+    supervisor = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='supervisees',
+    )
 
     @property
     def is_admin(self):

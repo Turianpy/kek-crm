@@ -2,12 +2,14 @@ from customers.models import Customer
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
 from interactions.models import ChatLog, EmailLog, Interaction
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import SearchFilter
 from users.models import User
 
 from .permissions import (ChatLogsPermission, CustomerPermission,
@@ -20,12 +22,16 @@ from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           GroupSerializer, InteractionCreateSerializer,
                           InteractionSerializer, PermissionSerializer,
                           UserCreateSerializer, UserSerializer)
+from .filters import UserFilter, ChatLogFilter, EmailLogFilter
 
 
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     permission_classes = [IsAuthenticated & CustomerPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['business__name']
+    search_fields = ['email', 'first_name', 'last_name']
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -37,6 +43,9 @@ class InteractionViewSet(ModelViewSet):
     queryset = Interaction.objects.all()
     serializer_class = InteractionSerializer
     permission_classes = [IsAuthenticated & InteractionPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['type']
+    search_fields = ['user__username', 'customer__email']
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -53,6 +62,8 @@ class ChatLogViewSet(ModelViewSet):
     queryset = ChatLog.objects.all()
     serializer_class = ChatLogSerializer
     permission_classes = [IsAuthenticated & ChatLogsPermission]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ChatLogFilter
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -64,12 +75,17 @@ class EmailLogViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated & EmailLogsPermission]
     queryset = EmailLog.objects.all()
     serializer_class = EmailLogSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = EmailLogFilter
 
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     permission_classes = [IsAuthenticated & UserPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = UserFilter
+    search_fields = ['username']
 
     def get_serializer_class(self):
         if self.action == 'create':
