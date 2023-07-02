@@ -1,6 +1,7 @@
 from customers.models import Customer
 from django.db import models
 from users.models import User
+import sys
 
 INTERACTION_TYPES = [
     ("phone call", "phone call"),

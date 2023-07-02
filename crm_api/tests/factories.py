@@ -79,8 +79,10 @@ class UserFactory(factory.django.DjangoModelFactory):
     def add_groups(instance, create, extracted, **kwargs):
         if not create:
             return
-        for _ in range(3):
-            instance.groups.add(random.choice(Group.objects.all()))
+        instance.groups.add(random.choice(Group.objects.all()))
+
+        instance.set_password(instance.password)
+        instance.save()
 
 
 class CustomerFactory(factory.django.DjangoModelFactory):

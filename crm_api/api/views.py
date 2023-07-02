@@ -6,12 +6,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from interactions.models import ChatLog, EmailLog, Interaction
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.filters import SearchFilter
 from users.models import User
 
+from .filters import ChatLogFilter, EmailLogFilter, UserFilter
 from .permissions import (ChatLogsPermission, CustomerPermission,
                           EmailLogsPermission, InteractionPermission, IsAdmin,
                           UserPermission)
@@ -22,7 +23,6 @@ from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           GroupSerializer, InteractionCreateSerializer,
                           InteractionSerializer, PermissionSerializer,
                           UserCreateSerializer, UserSerializer)
-from .filters import UserFilter, ChatLogFilter, EmailLogFilter
 
 
 class CustomerViewSet(ModelViewSet):

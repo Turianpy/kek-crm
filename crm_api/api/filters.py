@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
-from users.models import User
 from interactions.models import ChatLog, EmailLog
+from users.models import User
 
 
 class UserFilter(filters.FilterSet):
