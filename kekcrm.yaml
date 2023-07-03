@@ -5,21 +5,21 @@ info:
   description: kek?
   
 paths:
-  '/auth/token/':
+  '/auth/jwt/create/':
     post:
       tags:
         - Auth
       operationId: getToken
-      summary: Get a JWT authentication token
+      summary: Get access and refresh JWT tokens
       requestBody:
         description: User credentials
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetToken'
+              $ref: '#/components/schemas/UserCredentials'
       responses:
-        '201':
+        '200':
           description: successfully created
           content:
             application/json:
@@ -27,17 +27,49 @@ paths:
                 $ref: '#/components/schemas/GetToken'
         '400':
           $ref: '#/components/responses/ValidationError'
-  '/auth/logout/':
+        '401':
+          $ref: '#/components/responses/AuthError'
+  '/auth/jwt/refresh/':
     post:
       tags:
         - Auth
       operationId: logout
-      summary: Blacklist user's token
+      summary: refresh token
+      requestBody:
+        description: refresh token
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
       responses:
-        '204':
-          description: Successfully logged out
+        '200':
+          description: Successfully refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '401':
-          $ref: '#/components/responses/AuthError'
+          description: invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Token is invalid or expired"
+                  code:
+                    type: string
+                    example: "token_not_valid"
   '/users/':
     get:
       tags:
@@ -80,19 +112,28 @@ paths:
       tags:
         - Users
       operationId: create a new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
       responses:
         '200':
           description: successfully created a user
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/AuthError'
+                $ref: '#/components/schemas/UserCreate'
         '403':
           $ref: '#/components/responses/PermissionError'
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: bad request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/UsernameValidationError'
+                  - $ref: '#/components/schemas/ValidationError'
   '/users/{id}/':
     parameters:
       - name: id
@@ -121,6 +162,8 @@ paths:
       tags:
         - Users
       operationId: patchUser
+      requestBody:
+        $ref: '#/components/requestBodies/PatchRequest'
       responses:
         '200':
           description: successfully updated a user
@@ -188,6 +231,11 @@ paths:
       tags:
         - Customers
       operationId: create customer record
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerBase'
       responses:
         '201':
           description: successfully created a customer record
@@ -221,7 +269,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Customer'
+                $ref: '#/components/schemas/CustomerDetail'
         '401':
           $ref: '#/components/responses/AuthError'
         '403':
@@ -231,6 +279,8 @@ paths:
       tags:
         - Customers
       operationId: update customer record
+      requestBody:
+        $ref: '#/components/requestBodies/PatchRequest'
       responses:
         '201':
           description: successfully updated a customer record
@@ -288,7 +338,10 @@ paths:
                     results:
                       type: array
                       items:
-                        $ref: '#/components/schemas/Interaction'
+                        oneOf:
+                          - $ref: '#/components/schemas/PhoneCallInteraction'
+                          - $ref: '#/components/schemas/ChatInteraction'
+                          - $ref: '#/components/schemas/EmailInteraction'
                       description: list of objects
         '401':
           $ref: '#/components/responses/AuthError'
@@ -330,22 +383,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Interaction'
+                oneOf:
+                  - $ref: '#/components/schemas/PhoneCallInteraction'
+                  - $ref: '#/components/schemas/ChatInteraction'
+                  - $ref: '#/components/schemas/EmailInteraction'
         '401':
           $ref: '#/components/responses/AuthError'
         '403':
           $ref: '#/components/responses/PermissionError'
-    patch:
-      tags:
-        - Interactions
-      description: update an interaction record
-      responses:
-        '201':
-          description: successfully updated an interaction
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Interaction'
     delete:
       tags:
         - Interactions
@@ -357,9 +402,281 @@ paths:
           $ref: '#/components/responses/AuthError'
         '403':
           $ref: '#/components/responses/PermissionError'
-          
+  '/permissions/':
+    get:
+      tags:
+        - Permissions
+      description: 'List all permissions'
+      responses:
+        '200':
+          $ref: '#/components/responses/Permission'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Permissions
+      description: 'Create a permission'
+      requestBody:
+        $ref: '#/components/requestBodies/Permission'
+      responses:
+        '201':
+          $ref: '#/components/responses/Permission'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  '/permissions/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: permission's unique identifier
+        schema:
+          type: integer
+          example: 531
+    get:
+      tags:
+        - Permissions
+      description: 'retreive a permission'
+      responses:
+        '200':
+          $ref: '#/components/responses/Permission'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    patch:
+      tags:
+        - Permissions
+      description: 'update a permission'
+      requestBody:
+        $ref: '#/components/requestBodies/PatchRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Permission'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    delete:
+      tags:
+        - Permissions
+      description: 'delete a permission'
+      responses:
+        '204':
+          description: deleted
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+  '/groups/':
+    get:
+      tags:
+        - Groups
+      responses:
+        '200':
+          $ref: '#/components/responses/Group'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Groups
+      requestBody:
+        $ref: '#/components/requestBodies/Group'
+      responses:
+        '201':
+          $ref: '#/components/responses/Group'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  '/groups/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: group's unique identifier
+        schema:
+          type: integer
+          example: 123
+    get:
+      tags:
+        - Groups
+      responses:
+        '200':
+          $ref: '#/components/responses/Group'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    patch:
+      tags:
+        - Groups
+      requestBody:
+        $ref: '#/components/requestBodies/PatchRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Group'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    delete:
+      tags:
+        - Groups
+      responses:
+        '204':
+          description: deleted
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+  
+  '/logs/chats/':
+    get:
+      tags:
+        - Logs
+      responses:
+        '200':
+          $ref: '#/components/responses/Chat'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Logs
+      requestBody:
+        $ref: '#/components/requestBodies/Chat'
+      responses:
+        '200':
+          $ref: '#/components/responses/Chat'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+  '/logs/chats/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: chat's unique identifier
+        schema:
+          type: integer
+          example: 345
+    get:
+      tags:
+        - Logs
+      responses:
+        '200':
+          $ref: '#/components/responses/Chat'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    delete:
+      tags:
+        - Logs
+      responses:
+        '204':
+          description: deleted
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+  '/logs/emails/':
+    get:
+      tags:
+        - Logs
+      responses:
+        '200':
+          $ref: '#/components/responses/Email'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    post:
+      tags:
+        - Logs
+      requestBody:
+        $ref: '#/components/requestBodies/Email'
+      responses:
+        '200':
+          $ref: '#/components/responses/Email'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+  '/logs/emails/{id}/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: email's unique identifier
+        schema:
+          type: integer
+          example: 345
+    get:
+      tags:
+        - Logs
+      responses:
+        '200':
+          $ref: '#/components/responses/Email'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+    delete:
+      tags:
+        - Logs
+      responses:
+        '204':
+          description: deleted
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
 components:
   schemas:
+    UserCredentials:
+      type: object
+      description: user login informatoion
+      properties:
+        username:
+          type: string
+          description: user's username
+        password:
+          type: string
+          description: user password
+    UserCreate:
+      type: object
+      description: object for user creation
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: string
     User:
       type: object
       description: object schema of the CRM user
@@ -367,6 +684,12 @@ components:
         id:
           type: integer
           description: unique identifier
+        last_login:
+          type: string
+          format: date-time
+        username:
+          type: string
+          example: 'johndoe69'
         first_name:
           type: string
           description: first name
@@ -388,6 +711,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Interaction'
+        phone_number:
+          type: string
+          example: '+99-999-99-99'
+        permissions:
+          type: array
+          items:
+            type: integer
+            example: 1
+        groups:
+          type: array
+          items:
+            type: integer
+            example: 1
           
     Interaction:
       type: object
@@ -396,13 +732,13 @@ components:
         id:
           type: integer
           description: unique identifier
-        customer_id:
+        customer:
           type: integer
           description: customer's unique identifier
-        interaction_type:
+        type:
           type: string
           description: the type of the interaction, e.g. phone call, email etc
-          enum: ['phone call', 'email', 'live chat']
+          enum: ['phone call', 'email', 'chat']
         date:
           type: string
           format: date-time
@@ -410,37 +746,195 @@ components:
         notes:
           type: string
           description: additional information
-          example: 'customer was rude af'
-    Customer:
+          example: 'customer was rude'
+    
+    EmailCreate:
       type: object
-      description: Customer object schema
+      description: 'Email object'
+      properties:
+        sender:
+          type: string
+          format: email
+        receiver:
+          type: string
+          format: email
+        subject:
+          type: string
+        body:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        interaction:
+          description: interaction id
+          type: integer
+    
+    Email:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: unique identifier
+        - $ref: '#/components/schemas/EmailCreate'
+          
+    Message:
+      type: object
+      description: 'Chat message object'
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        sender:
+          type: string
+          description: name or username of the sender
+        content:
+          type: string
+          description: the message itself
+    
+    Chat:
+      type: object
+      description: 'Chatlog object'
+      properties:
+        id:
+          type: integer
+          description: unique identifier
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    ChatDetail:
+      allOf:
+        - $ref: '#/components/schemas/Chat'
+        - type: object
+          properties:
+            started_at:
+              type: string
+              format: date-time
+            ended_at:
+              type: string
+              format: date-time
+            interaction:
+              type: integer
+              description: interaction id
+    PhoneCallInteraction:
+      allOf:
+        - $ref: '#/components/schemas/Interaction'
+        - type: object
+          properties:
+            recording:
+              type: string
+              format: binary
+    EmailInteraction:
+      allOf:
+        - $ref: '#/components/schemas/Interaction'
+        - type: object
+          properties:
+            emaillog:
+              type: array
+              items:
+                $ref: '#/components/schemas/Email'
+    ChatInteraction:
+      allOf:
+        - $ref: '#/components/schemas/Interaction'
+        - type: object
+          properties:
+            chatlog:
+              type: array
+              items:
+                $ref: '#/components/schemas/Chat'
+    
+    CustomerBase:
+      type: object
+      description: Base Customer object
+      properties:
+        first_name:
+          type: string
+          example: 'Davy'
+        last_name:
+          type: string
+          example: 'Jones'
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: string
+          
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/CustomerBase'
+        - type: object
+          description: Customer object schema
+          properties:
+            id:
+              type: integer
+              description: unique identifier
+            business:
+              type: integer
+              description: id of the business the customer represents
+              nullable: true
+          required: ['id', 'name', 'email', 'phone_number']
+          
+    CustomerDetail:
+      allOf:
+        - $ref: '#/components/schemas/Customer'
+        
+        - type: object
+          description: Customer detail view schema
+          properties:
+            interactions:
+              type: array
+              example: [1, 2, 3]
+              items:
+                type: integer
+    PermissionPost:
+      type: object
+      properties:
+        name:
+          type: string
+        codename:
+          type: string
+        content_type:
+          type: integer
+          description: id of related model in the content_type table
+
+    Permission:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: unique identifier
+        - $ref: '#/components/schemas/PermissionPost'
+    
+    GroupCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: integer
+            description: permission id
+    
+    Group:
+      type: object
       properties:
         id:
           type: integer
           description: unique identifier
         name:
           type: string
-          description: The full name of the customer
-        email:
-          type: string
-          description: The email address of the customer
-        phone_number:
-          type: string
-          description: The phone number of the customer
-        interactions:
-          type: array
-          description: List of ids of interactions associated with the customer
-          items:
-            type: integer
-      required: ['id', 'name', 'email', 'phone_number']
-          
+        permissions:
+          $ref: '#/components/schemas/Permission'
     AuthError:
       description: 'authentication failure'
       type: object
       properties:
         detail:
           type: string
-          example: 'Authentication credentials were not provided'
+          example: "Authentication credentials were not provided."
     ValidationError:
       description: Standard DRF validation error
       type: object
@@ -451,20 +945,81 @@ components:
           type: array
           items:
             type: string
+    UsernameValidationError:
+      description: username already exists
+      type: object
+      properties:
+        username:
+          type: array
+          example: ['A user with that username already exists']
+          items:
+            type: string
     PermissionError:
       description: Permission denied
       type: object
       properties:
         detail:
           description: 'Error description'
-          example: 'You do not have sufficient rights to perform this action'
+          example: "You do not have permission to perform this action."
           type: string
     GetToken:
       type: object
       properties:
-        auth_token:
+        refresh:
           type: string
-
+        access:
+          type: string
+    PatchRequest:
+      type: object
+      properties:
+        field_name:
+          type: string
+          example: 'new value'
+  requestBodies:
+    PatchRequest:
+      description: 'Patch request'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PatchRequest'
+    Permission:
+      description: 'Permission object for POST'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PermissionPost'
+    Group:
+      description: 'Group object for POST'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupCreate'
+    Chat:
+      description: 'Chat object for POST'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              interaction:
+                type: integer
+                description: interaction id
+              messages:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+              started_at:
+                type: string
+                format: date-time
+              ended_at:
+                type: string
+                format: date-time
+    Email:
+      description: 'Email object for POST'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmailCreate'
   responses:
     ValidationError:
       description: 'Bad request'
@@ -484,3 +1039,38 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AuthError'
+    Interaction:
+      description: 'Interaction json response'
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/PhoneCallInteraction'
+    Permission:
+      description: 'Permission json response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Permission'
+    Group:
+      description: 'Group json response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Group'
+    Chat:
+      description: 'Chat log json response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatDetail'
+    Email:
+      description: 'Email log json response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Email'
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/KEKMASTER69/KEKCRM/1
