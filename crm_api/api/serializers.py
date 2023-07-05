@@ -3,8 +3,10 @@ import base64
 from customers.models import Customer
 from django.contrib.auth import get_user_model, models
 from django.core.files.base import ContentFile
-from interactions.models import ChatLog, EmailLog, Image, Interaction, Message
+from interactions.models import (ChatLog, Email, EmailLog, Image, Interaction,
+                                 Message)
 from rest_framework import serializers as s
+from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -49,6 +51,13 @@ class UserCreateSerializer(s.ModelSerializer):
         ret = super().to_representation(instance)
         ret.pop('password')
         return ret
+
+
+class UserShortSerializer(s.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['id', 'username']
 
 
 class PermissionSerializer(s.ModelSerializer):
@@ -121,6 +130,13 @@ class CustomerWithInteractionsSerializer(s.ModelSerializer):
         )
 
 
+class CustomerShortSerializer(s.ModelSerializer):
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'first_name', 'last_name', 'email']
+
+
 class MessageSerializer(s.ModelSerializer):
     class Meta:
         model = Message
@@ -137,10 +153,17 @@ class ChatLogCreateSerializer(s.ModelSerializer):
 
     def create(self, validated_data):
         messages_data = validated_data.pop('messages')
+        if not messages_data:
+            raise ValidationError('required field')
         chatlog = ChatLog.objects.create(**validated_data)
         for message_data in messages_data:
             Message.objects.create(chat=chatlog, **message_data)
         return chatlog
+
+    def update(self, instance, validated_data):
+        if validated_data.get('messages'):
+            raise ValidationError('cannot update messages')
+        return super().update(instance, validated_data)
 
 
 class ChatLogSerializer(s.ModelSerializer):
@@ -152,10 +175,49 @@ class ChatLogSerializer(s.ModelSerializer):
         fields = '__all__'
 
 
+class EmailSerializer(s.ModelSerializer):
+    class Meta:
+        model = Email
+        exclude = ('log', )
+
+
 class EmailLogSerializer(s.ModelSerializer):
+    emails = EmailSerializer(many=True)
+    participants = s.SerializerMethodField()
+
     class Meta:
         model = EmailLog
         fields = '__all__'
+
+    def get_participants(self, instance):
+        users, customers = [], []
+        for p in instance.participants:
+            if User.objects.filter(email=p).exists():
+                users.append(
+                    UserShortSerializer(User.objects.get(email=p)).data
+                )
+            else:
+                customers.append(
+                    CustomerShortSerializer(Customer.objects.get(email=p)).data
+                )
+        return {'users': users, 'customers': customers}
+
+
+class EmailLogCreateSerializer(s.ModelSerializer):
+    emails = EmailSerializer(many=True)
+
+    class Meta:
+        model = EmailLog
+        fields = '__all__'
+
+    def create(self, validated_data):
+        emails_data = validated_data.pop('emails')
+        if not emails_data:
+            raise ValidationError('required field')
+        email_log = EmailLog.objects.create(**validated_data)
+        for data in emails_data:
+            Email.objects.create(log=email_log, **data)
+        return email_log
 
 
 class ImageSerializer(s.ModelSerializer):

@@ -1,7 +1,9 @@
+import sys
+
 from customers.models import Customer
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from users.models import User
-import sys
 
 INTERACTION_TYPES = [
     ("phone call", "phone call"),
@@ -72,8 +74,16 @@ class EmailLog(models.Model):
         on_delete=models.CASCADE,
         related_name='emaillog'
     )
+    participants = ArrayField(models.EmailField(), null=True)
+
+
+class Email(models.Model):
+    log = models.ForeignKey(EmailLog, on_delete=models.CASCADE, related_name='emails')
     sender = models.EmailField()
     receiver = models.EmailField()
     subject = models.CharField(max_length=256)
     body = models.TextField()
     sent_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ['sent_at']

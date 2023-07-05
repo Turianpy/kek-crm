@@ -1,8 +1,8 @@
-import pytest
-
 from http import HTTPStatus
 
+import pytest
 from fixtures.user_fixtures import *
+
 
 @pytest.mark.django_db
 class TestAuth:

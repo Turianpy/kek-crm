@@ -2,6 +2,7 @@ from customers.models import Customer
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from interactions.models import ChatLog, EmailLog, Interaction
 from rest_framework import status, viewsets
@@ -19,7 +20,8 @@ from .permissions import (ChatLogsPermission, CustomerPermission,
 from .serializers import (ChatLogCreateSerializer, ChatLogSerializer,
                           CustomerSerializer,
                           CustomerWithInteractionsSerializer,
-                          EmailLogSerializer, GroupCreateSerializer,
+                          EmailLogCreateSerializer, EmailLogSerializer,
+                          EmailSerializer, GroupCreateSerializer,
                           GroupSerializer, InteractionCreateSerializer,
                           InteractionSerializer, PermissionSerializer,
                           UserCreateSerializer, UserSerializer)
@@ -57,6 +59,26 @@ class InteractionViewSet(ModelViewSet):
             request.data['user'] = request.user.id
         return super().create(request, *args, **kwargs)
 
+    @action(detail=True, methods=['get'])
+    def log(self, request, pk):
+        interaction = Interaction.objects.get(id=pk)
+        if interaction.type == 'chat':
+            return Response(
+                ChatLogSerializer(interaction.chatlog.get()).data
+            )
+        elif interaction.type == 'email':
+            return Response(
+                EmailLogSerializer(interaction.emaillog.get()).data
+            )
+        else:
+            file_handle = interaction.recording.open('rb')
+            response = FileResponse(file_handle, content_type='audio/wav')
+            response['Content-Disposition'] = (
+                f'attachment; filename='
+                f'"{interaction.recording.name}"'
+            )
+            return response
+
 
 class ChatLogViewSet(ModelViewSet):
     queryset = ChatLog.objects.all()
@@ -64,6 +86,7 @@ class ChatLogViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated & ChatLogsPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ChatLogFilter
+    http_method_names = ['get', 'post', 'delete']
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -77,6 +100,21 @@ class EmailLogViewSet(ModelViewSet):
     serializer_class = EmailLogSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = EmailLogFilter
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return EmailLogCreateSerializer
+        return EmailLogSerializer
+
+    @action(detail=True, methods=['post'])
+    def add(self, request, pk):
+        email = EmailSerializer(data={**request.data, 'log': pk})
+        if email.is_valid(raise_exception=True):
+            email.save()
+            email_log = EmailLog.objects.get(id=pk)
+            email_log.emails.add(email.instance)
+            email_log.save()
+        return Response(EmailLogSerializer(instance=email_log).data, status=status.HTTP_201_CREATED)
 
 
 class UserViewSet(viewsets.ModelViewSet):

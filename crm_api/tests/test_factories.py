@@ -1,7 +1,7 @@
 import pytest
-
 from django.contrib.auth.models import Group, Permission
-from interactions.models import Interaction, Customer, ChatLog, EmailLog, Message, INTERACTION_TYPES
+from interactions.models import (INTERACTION_TYPES, ChatLog, Customer,
+                                 EmailLog, Interaction, Message)
 
 
 @pytest.mark.django_db

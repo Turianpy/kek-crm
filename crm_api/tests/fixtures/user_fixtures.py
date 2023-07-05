@@ -1,7 +1,7 @@
 import pytest
+from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from django.contrib.auth.models import Group
 
 
 @pytest.fixture

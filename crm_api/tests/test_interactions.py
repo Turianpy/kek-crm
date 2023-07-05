@@ -1,9 +1,8 @@
-import pytest
-
-from interactions.models import Interaction
-from fixtures.user_fixtures import * # noqa
-
 from http import HTTPStatus
+
+import pytest
+from fixtures.user_fixtures import *  # noqa
+from interactions.models import Interaction
 from utils import check_pagination
 
 
@@ -135,26 +134,48 @@ class TestInteraction:
 
         response = agent_client.post(self.chats_url, data=data, format='json')
         assert response.status_code == HTTPStatus.CREATED
+        data['messages'] = []
+        response = agent_client.post(self.chats_url, data=data, format='json')
+        assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_email_create(
+    def test_email_log_create(
             self, agent_client,
-            customer_factory
+            customer_factory,
+            user_factory,
+            email_factory
     ):
         c = customer_factory.create()
-        data = {
-            'type': 'email',
-            'notes': 'test notes',
-            'customer': c.id
-        }
-        agent_client.post(self.list_url, data=data, format='json')
-        i = Interaction.objects.get()
+        u = user_factory.create_batch(3)
+        i = Interaction.objects.create(user=u[0], customer=c, type='email')
+
+        emails_data = [
+            {
+                'sender': e.sender,
+                'receiver': e.receiver,
+                'subject': e.subject,
+                'body': e.body,
+                'sent_at': e.sent_at
+            } for e in email_factory.build_batch(5)]
+
         data = {
             'interaction': i.id,
-            'subject': 'test subject',
-            'body': 'test content',
-            'sender': 'admin@kekcrm.com',
-            'receiver': 'customer@test.com',
-            'sent_at': '2020-01-01T00:00:00Z'
+            'participants': [u.email for u in u] + [c.email],
+            'emails': emails_data
         }
         response = agent_client.post(self.emails_url, data=data, format='json')
         assert response.status_code == HTTPStatus.CREATED
+        data['emails'] = []
+        response = agent_client.post(self.emails_url, data=data, format='json')
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_chatlog_update(
+            self, admin_client,
+            chat_log_factory
+    ):
+        c = chat_log_factory.create()
+        response = admin_client.patch(
+            self.chats_url + str(c.id) + '/',
+            data={}, format='json'
+        )
+        assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    

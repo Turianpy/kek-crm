@@ -1,18 +1,20 @@
+import os
+import shutil
+
 import pytest
 from django.core.management import call_command
 from factories import (BusinessFactory, ChatLogFactory, CustomerFactory,
-                       EmailFactory, InteractionFactory, MessageFactory,
-                       UserFactory)
-from pytest_factoryboy import register
+                       EmailFactory, EmailLogFactory, InteractionFactory,
+                       MessageFactory, UserFactory)
 from interactions.models import Interaction
-import os
-import shutil
+from pytest_factoryboy import register
 
 register(CustomerFactory)
 register(InteractionFactory)
 register(ChatLogFactory)
 register(MessageFactory)
 register(EmailFactory)
+register(EmailLogFactory)
 register(UserFactory)
 register(BusinessFactory)
 

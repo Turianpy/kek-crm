@@ -1,9 +1,10 @@
 import pytest
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
-from django.contrib.auth.models import Permission, Group
-
+from interactions.models import (INTERACTION_TYPES, ChatLog, Customer,
+                                 EmailLog, Interaction, Message)
 from users.models import User
-from interactions.models import Interaction, Customer, ChatLog, EmailLog, Message, INTERACTION_TYPES
+
 
 @pytest.mark.django_db
 class TestCommands:

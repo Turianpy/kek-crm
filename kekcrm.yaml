@@ -402,6 +402,37 @@ paths:
           $ref: '#/components/responses/AuthError'
         '403':
           $ref: '#/components/responses/PermissionError'
+  '/interactions/{id}/log/':
+    parameters:
+      - name: id
+        required: true
+        in: path
+        description: customer's unique identifier
+        schema:
+          type: integer
+          example: 531
+    get:
+      tags:
+        - Interactions
+      description: get interaction's log
+      responses:
+        '200':
+          description: successfully retrieved
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/EmailLog'
+                  - $ref: '#/components/schemas/Chat'
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/PermissionError'
+                  
   '/permissions/':
     get:
       tags:
@@ -600,7 +631,7 @@ paths:
         - Logs
       responses:
         '200':
-          $ref: '#/components/responses/Email'
+          $ref: '#/components/responses/EmailLog'
         '401':
           $ref: '#/components/responses/AuthError'
         '403':
@@ -609,10 +640,10 @@ paths:
       tags:
         - Logs
       requestBody:
-        $ref: '#/components/requestBodies/Email'
+        $ref: '#/components/requestBodies/EmailLog'
       responses:
         '200':
-          $ref: '#/components/responses/Email'
+          $ref: '#/components/responses/EmailLog'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -633,7 +664,7 @@ paths:
         - Logs
       responses:
         '200':
-          $ref: '#/components/responses/Email'
+          $ref: '#/components/responses/EmailLog'
         '401':
           $ref: '#/components/responses/AuthError'
         '403':
@@ -748,9 +779,9 @@ components:
           description: additional information
           example: 'customer was rude'
     
-    EmailCreate:
+    Email:
       type: object
-      description: 'Email object'
+      description: Email object
       properties:
         sender:
           type: string
@@ -765,18 +796,35 @@ components:
         sent_at:
           type: string
           format: date-time
+        log:
+          type: integer
+          description: id of the related log object
+    
+    EmailLogCreate:
+      type: object
+      description: 'Email log object'
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+            format: email
         interaction:
           description: interaction id
           type: integer
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Email'
     
-    Email:
+    EmailLog:
       allOf:
         - type: object
           properties:
             id:
               type: integer
               description: unique identifier
-        - $ref: '#/components/schemas/EmailCreate'
+        - $ref: '#/components/schemas/EmailLogCreate'
           
     Message:
       type: object
@@ -1014,12 +1062,12 @@ components:
               ended_at:
                 type: string
                 format: date-time
-    Email:
+    EmailLog:
       description: 'Email object for POST'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/EmailCreate'
+            $ref: '#/components/schemas/EmailLogCreate'
   responses:
     ValidationError:
       description: 'Bad request'
@@ -1064,12 +1112,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ChatDetail'
-    Email:
+    EmailLog:
       description: 'Email log json response'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Email'
+            $ref: '#/components/schemas/EmailLog'
 servers:
   # Added by API Auto Mocking Plugin
   - description: SwaggerHub API Auto Mocking

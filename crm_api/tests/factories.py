@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group, Permission
 from django.core.files import File
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
-from interactions.models import (INTERACTION_TYPES, ChatLog, EmailLog,
+from interactions.models import (INTERACTION_TYPES, ChatLog, Email, EmailLog,
                                  Interaction, Message)
 from users.models import User
 
@@ -111,7 +111,7 @@ class InteractionFactory(factory.django.DjangoModelFactory):
         if instance.type == 'chat':
             ChatLogFactory.create(interaction=instance)
         elif instance.type == 'email':
-            EmailFactory.create(interaction=instance)
+            EmailLogFactory.create(interaction=instance)
         else:
             instance.recording = generate_audio()
             instance.save()
@@ -148,14 +148,48 @@ class MessageFactory(factory.django.DjangoModelFactory):
     chat = factory.SubFactory(ChatLogFactory)
 
 
-class EmailFactory(factory.django.DjangoModelFactory):
+class EmailLogFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EmailLog
 
     interaction = factory.SubFactory(InteractionFactory)
-    subject = factory.LazyAttribute(lambda x: fake.text())
-    body = factory.LazyAttribute(lambda x: fake.text())
+    participants = factory.LazyAttribute(
+        lambda x: [
+            u.email for u in random.sample(
+                list(User.objects.all()),
+                random.randint(1, 3)
+            )
+            ] + [
+            random.choice(list(Customer.objects.all())).email
+            ]
+        )
+
+    @factory.post_generation
+    def add_emails(instance, create, extracted, **kwargs):
+        if not create:
+            return
+        for _ in range(5):
+            EmailFactory.create(log=instance)
+
+
+class EmailFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Email
+
+    subject = factory.LazyAttribute(lambda x: fake.text(max_nb_chars=30))
+    body = factory.LazyAttribute(lambda x: fake.text(max_nb_chars=100))
+    log = factory.SubFactory(EmailLogFactory)
     sent_at = factory.LazyAttribute(lambda x: fake.date_time(tzinfo=pytz.UTC))
+
+    @factory.post_generation
+    def add_sender_and_receiver(instance, create, extracted, **kwargs):
+        instance.sender, instance.receiver = random.sample(
+            instance.log.participants,
+            2
+        )
+        if create:
+            instance.save()
+        return instance
 
 
 class BusinessFactory(factory.django.DjangoModelFactory):
