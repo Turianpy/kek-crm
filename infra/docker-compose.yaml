@@ -9,7 +9,7 @@ services:
       - ./.env
     
   crm_api:
-    image: turianpy/crm_api:latest
+    image: turianpy/kekcrm:latest
     restart: always
     volumes:
       - static_backend:/app/static_backend/
