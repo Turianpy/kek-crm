@@ -39,6 +39,7 @@ jobs:
     - name: run migrations
       run: |
         export SECRET_KEY=${{ secrets.SECRET_KEY }}
+        cd crm_api
         python manage.py makemigrations
         python manage.py migrate
     - name: run tests
