@@ -1,7 +1,6 @@
 import pytest
 from django.contrib.auth.models import Permission
-from fixtures.user_fixtures import *
-from interactions.models import Interaction
+from fixtures.user_fixtures import *  # noqa
 
 
 @pytest.mark.django_db

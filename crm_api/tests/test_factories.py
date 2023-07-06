@@ -1,5 +1,4 @@
 import pytest
-from django.contrib.auth.models import Group, Permission
 from interactions.models import (INTERACTION_TYPES, ChatLog, Customer,
                                  EmailLog, Interaction, Message)
 
@@ -13,7 +12,9 @@ class TestFactories:
         assert u.groups.count() == 1
 
     def test_interaction_and_subfactories(self, interaction_factory):
-        interactions = [interaction_factory.create(type=t[0]) for t in INTERACTION_TYPES]
+        interactions = [
+            interaction_factory.create(type=t[0]) for t in INTERACTION_TYPES
+        ]
 
         assert Interaction.objects.count() == len(INTERACTION_TYPES)
         for i in interactions:

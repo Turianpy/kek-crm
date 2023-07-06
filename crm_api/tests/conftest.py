@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import pytest
 from django.core.management import call_command
@@ -31,5 +30,7 @@ def cleanup():
     yield
 
     for interaction in Interaction.objects.all():
-        if interaction.recording and os.path.isfile(interaction.recording.path):
+        if interaction.recording and os.path.isfile(
+            interaction.recording.path
+        ):
             os.remove(interaction.recording.path)

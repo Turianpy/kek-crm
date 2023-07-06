@@ -127,7 +127,7 @@ class TestInteraction:
                     'timestamp': m.timestamp,
                     'sender': m.sender,
                     'content': m.content
-                 } for m in msgs],
+                } for m in msgs],
             'started_at': msgs[0].timestamp,
             'ended_at': msgs[-1].timestamp
         }
@@ -178,4 +178,3 @@ class TestInteraction:
             data={}, format='json'
         )
         assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
-    

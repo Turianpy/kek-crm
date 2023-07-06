@@ -1,5 +1,5 @@
 import pytest
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 from interactions.models import (INTERACTION_TYPES, ChatLog, Customer,
                                  EmailLog, Interaction, Message)

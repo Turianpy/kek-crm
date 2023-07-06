@@ -66,18 +66,17 @@ class InteractionViewSet(ModelViewSet):
             return Response(
                 ChatLogSerializer(interaction.chatlog.get()).data
             )
-        elif interaction.type == 'email':
+        if interaction.type == 'email':
             return Response(
                 EmailLogSerializer(interaction.emaillog.get()).data
             )
-        else:
-            file_handle = interaction.recording.open('rb')
-            response = FileResponse(file_handle, content_type='audio/wav')
-            response['Content-Disposition'] = (
-                f'attachment; filename='
-                f'"{interaction.recording.name}"'
-            )
-            return response
+        file_handle = interaction.recording.open('rb')
+        response = FileResponse(file_handle, content_type='audio/wav')
+        response['Content-Disposition'] = (
+            f'attachment; filename='
+            f'"{interaction.recording.name}"'
+        )
+        return response
 
 
 class ChatLogViewSet(ModelViewSet):
@@ -114,7 +113,10 @@ class EmailLogViewSet(ModelViewSet):
             email_log = EmailLog.objects.get(id=pk)
             email_log.emails.add(email.instance)
             email_log.save()
-        return Response(EmailLogSerializer(instance=email_log).data, status=status.HTTP_201_CREATED)
+        return Response(
+            EmailLogSerializer(instance=email_log).data,
+            status=status.HTTP_201_CREATED
+        )
 
 
 class UserViewSet(viewsets.ModelViewSet):

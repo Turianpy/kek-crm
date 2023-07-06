@@ -16,8 +16,9 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         return (
-            'admin' in self.groups.values_list('name', flat=True)
-            or self.is_superuser
+            'admin' in self.groups.values_list(
+                'name', flat=True
+            ) or self.is_superuser
         )
 
     def has_perm(self, perm: str, obj=None) -> bool:

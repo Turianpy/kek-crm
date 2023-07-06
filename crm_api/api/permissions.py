@@ -4,11 +4,13 @@ from rest_framework import permissions as p
 def check_object_permissions(request, model, app_name=None):
     if request.method == 'POST':
         return request.user.has_perm(f'{app_name}.add_{model}')
-    elif request.method == 'DELETE':
+    if request.method == 'DELETE':
         return request.user.has_perm(f'{app_name}.delete_{model}')
-    elif request.method == 'PATCH':
+    if request.method == 'PATCH':
         return request.user.has_perm(f'{app_name}.change_{model}')
-    return request.user.has_perm(f'{app_name}.view_{model}') or request.user.is_admin
+    return request.user.has_perm(
+        f'{app_name}.view_{model}'
+    ) or request.user.is_admin
 
 
 class IsAdmin(p.BasePermission):
@@ -26,7 +28,9 @@ class InteractionPermission(p.BasePermission):
 
 class UserPermission(p.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_admin or request.user.has_perm('users.view_user')
+        return request.user.is_admin or request.user.has_perm(
+            'users.view_user'
+        )
 
     def has_object_permission(self, request, view, obj):
         return check_object_permissions(request, 'user')
@@ -34,7 +38,9 @@ class UserPermission(p.BasePermission):
 
 class CustomerPermission(p.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_admin or request.user.has_perm('customers.view_customer')
+        return request.user.is_admin or request.user.has_perm(
+            'customers.view_customer'
+        )
 
     def has_object_permission(self, request, view, obj):
         return check_object_permissions(request, 'customer')
@@ -42,7 +48,9 @@ class CustomerPermission(p.BasePermission):
 
 class EmailLogsPermission(p.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_admin or request.user.has_perm('interactions.view_emaillog')
+        return request.user.is_admin or request.user.has_perm(
+            'interactions.view_emaillog'
+        )
 
     def has_object_permission(self, request, view, obj):
         return check_object_permissions(request, 'emaillog')
@@ -50,7 +58,9 @@ class EmailLogsPermission(p.BasePermission):
 
 class ChatLogsPermission(p.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_admin or request.user.has_perm('interactions.view_chatlog')
+        return request.user.is_admin or request.user.has_perm(
+            'interactions.view_chatlog'
+        )
 
     def has_object_permission(self, request, view, obj):
         return check_object_permissions(request, 'chatlog')

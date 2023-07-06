@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import pytest
-from fixtures.user_fixtures import *
+from fixtures.user_fixtures import *  # noqa
 
 
 @pytest.mark.django_db
@@ -19,7 +19,9 @@ class TestAuth:
         assert 'access' in response.data
         assert 'refresh' in response.data
 
-    def test_superuser_can_refresh_token(self, superuser_client, superuser_token):
+    def test_superuser_can_refresh_token(
+        self, superuser_client, superuser_token
+    ):
         response = superuser_client.post(self.refresh_url, data={
             'refresh': superuser_token['refresh']
         })
@@ -36,7 +38,9 @@ class TestAuth:
         assert 'access' in response.data
         assert 'refresh' in response.data
 
-    def test_regular_user_can_refresh_token(self, manager_client, manager_token):
+    def test_regular_user_can_refresh_token(
+        self, manager_client, manager_token
+    ):
         response = manager_client.post(self.refresh_url, data={
             'refresh': manager_token['refresh']
         })
@@ -44,7 +48,9 @@ class TestAuth:
         assert response.status_code == HTTPStatus.OK
         assert 'access' in response.data
 
-    def test_user_can_not_create_token_with_wrong_password(self, manager_client, user_manager):
+    def test_user_can_not_create_token_with_wrong_password(
+        self, manager_client, user_manager
+    ):
         response = manager_client.post(self.create_url, data={
             'username': user_manager.username,
             'password': 'wrongpassword'
@@ -54,7 +60,9 @@ class TestAuth:
         assert 'access' not in response.data
         assert 'refresh' not in response.data
 
-    def test_user_can_not_refresh_token_with_wrong_refresh_token(self, manager_client):
+    def test_user_can_not_refresh_token_with_wrong_refresh_token(
+        self, manager_client
+    ):
         response = manager_client.post(self.refresh_url, data={
             'refresh': 'wrongrefresh'
         })

@@ -1,5 +1,3 @@
-import sys
-
 from customers.models import Customer
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -78,7 +76,9 @@ class EmailLog(models.Model):
 
 
 class Email(models.Model):
-    log = models.ForeignKey(EmailLog, on_delete=models.CASCADE, related_name='emails')
+    log = models.ForeignKey(
+        EmailLog, on_delete=models.CASCADE, related_name='emails'
+    )
     sender = models.EmailField()
     receiver = models.EmailField()
     subject = models.CharField(max_length=256)

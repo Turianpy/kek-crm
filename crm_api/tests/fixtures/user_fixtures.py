@@ -6,12 +6,12 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 @pytest.fixture
 def user_superuser(django_user_model):
-    user = django_user_model.objects.create_superuser(
+    return django_user_model.objects.create_superuser(
         username='admin',
         email='admin@kekcrm.com',
         password='adminpass123'
     )
-    return user
+
 
 @pytest.fixture
 def user_admin(user_factory):
