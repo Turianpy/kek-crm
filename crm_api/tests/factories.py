@@ -155,10 +155,7 @@ class EmailLogFactory(factory.django.DjangoModelFactory):
     interaction = factory.SubFactory(InteractionFactory)
     participants = factory.LazyAttribute(
         lambda x: [
-            u.email for u in random.sample(
-                list(User.objects.all()),
-                random.randint(1, 3)
-            )
+            random.choice(list(User.objects.all())).email
         ] + [
             random.choice(list(Customer.objects.all())).email
         ]
