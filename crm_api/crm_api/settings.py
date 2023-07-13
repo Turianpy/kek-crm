@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
     'djoser',
+    'drf_yasg',
     'rest_framework',
     'rest_framework_simplejwt',
     'django.contrib.admin',
@@ -131,6 +132,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_backend')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -168,4 +170,8 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Token', 'Bearer'),
+}
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_GENERATOR_CLASS": "api.docs.schema.CustomSchemaGenerator",
 }

@@ -20,6 +20,7 @@ class UserSerializer(s.ModelSerializer):
         exclude = (
             'password', 'is_superuser', 'date_joined'
         )
+        ref_name = 'ApiUserSerializer'
 
     def get_interactions(self, instance):
         return InteractionShortSerializer(
