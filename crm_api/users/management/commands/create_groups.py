@@ -30,4 +30,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             'Successfully created admin, agent & manager groups '
             'and assigned permissions'
-            ))
+        ))

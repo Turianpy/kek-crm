@@ -15,6 +15,9 @@ class Customer(models.Model):
     def __str__(self):
         return self.first_name + ' ' + self.last_name
 
+    class Meta:
+        ordering = ['last_name']
+
 
 class Business(models.Model):
     name = models.CharField(max_length=30)
