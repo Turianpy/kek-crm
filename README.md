@@ -1,4 +1,4 @@
-# kek-crm ![crm_workflow](https://github.com/Turianpy/kek-crm/actions/workflows/main.yml/badge.svg)
+# kek-crm ![crm_workflow](https://github.com/Turianpy/kek-crm/actions/workflows/main.yaml/badge.svg)
 just a simple crm
 
 to start the server:
